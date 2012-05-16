@@ -7,7 +7,15 @@ import(
     "io"
     "bufio"
     "strings"
+    "GoImp/lexer"
 )
+
+func main(){
+    r := new(io.Reader)
+    w := new(io.Writer)
+    lex := lexer.New(r, w)
+    fmt.Println(lex.t_while)
+}
 
 func readLines(path String) (lines []string, err error){
     var (
@@ -15,7 +23,7 @@ func readLines(path String) (lines []string, err error){
         part []byte
         prefix bool
     )
-    if (file, err = os.Open(path); err != nil) {
+    if file, err = os.Open(path); err != nil {
         return
     }
     defer file.Close()
@@ -23,4 +31,5 @@ func readLines(path String) (lines []string, err error){
     reader := bufio.NewReader(file)
     buffer := bytes.NewBuffer(make([]byte, 0))
 
+}
     
