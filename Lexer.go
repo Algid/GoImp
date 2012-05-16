@@ -5,28 +5,51 @@ import(
 )
 
 type Lexer struct{
-    source io.Reader
-    listing io.Writer
+    source *io.Reader
+    listing *io.Writer
 
     lexeme string
+    currentLine string
 }
 
 const(
-    t_and = iota; t_begin; t_boolean; t_break; t_call; t_end; t_else; t_elsif; t_false;
-    t_function; t_halt; t_if; t_input; t_integer; t_is; t_loop; t_not; t_null;
-    t_newline; t_or; t_output; t_procedure; t_return; t_then; t_true; t_var; t_while;
-    t_comma; t_colon; t_lparen; t_rparen; t_semi; t_lt; t_le; t_gt; t_ge; t_eq; t_ne;
-    t_plus; t_minus; t_mult; t_div; t_mod; t_assign; t_error; t_id; t_number; t_string; t_eof;
+    T_and = iota; T_begin; T_boolean; T_break; T_call; T_end; T_else; T_elsif; T_false;
+    T_function; T_halt; T_if; T_input; T_integer; T_is; T_loop; T_not; T_null;
+    T_newline; T_or; T_output; T_procedure; T_return; T_then; T_true; T_var; T_while;
+    T_comma; T_colon; T_lparen; T_rparen; T_semi; T_lt; T_le; T_gt; T_ge; T_eq; T_ne;
+    T_plus; T_minus; T_mult; T_div; T_mod; T_assign; T_error; T_id; T_number; T_string; T_eof;
 )
 
-func New(src io.Reader, list io.Writer) *Lexer{
+func New() *Lexer{
     return new(Lexer)
 }
 
-func (lex Lexer) GetLexeme() string{
+func (lex *Lexer) GetLexeme() string{
     return lex.lexeme
 }
 
-func GetChar() string {
-    return "l"
+func (lex *Lexer) GetChar() (char rune, err error) {
+    var (
+        part []byte
+        prefix bool
+    )
+    source := bufio.NewReader(source)
+    buffer := bytes.NewBuffer(make([]byte,0))
+    if lex.currentLine == ""{
+        if part, prefix, err = source.ReadLine(); err != nil {
+            break
+        }
+        buffer.Write(part)
+        if !prefix {
+            lex.currentLine = buffer.String()
+            if _, err = io.WriteString(listing, lex.currentLine); err != nil {
+                break
+            }
+            buffer.Reset()
+        }
+    }
+    runeReader := strings.NewReader(lex.currentLine)
+    if rune, _, err = runeReader.ReadRune(); err != nil {
+        break
+    }    
 }
