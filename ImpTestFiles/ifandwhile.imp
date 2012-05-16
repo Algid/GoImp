@@ -1,0 +1,21 @@
+procedure ifandwhile() is
+begin
+
+if 1 then 
+  output("one");
+end if;
+
+if 2 then
+  output("two");
+else
+  output("three or more");
+end if;
+
+while today loop
+  i = i + 1;
+  if tired then 
+     call take_nap();
+  end if;
+end loop;
+
+end ifandwhile;

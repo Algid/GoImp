@@ -1,0 +1,22 @@
+// expressions 
+procedure expr() is 
+begin
+output(12);
+output(a);
+output(false);
+output(true);
+output (a());
+output( a(1));
+output( a(1, 2));
+output ((12));
+output (not 12);
+output (-false);
+output (1 * 2 / false % 12 * -a and true);
+output ( 1 + a * b - 12 / 4 or true or false);
+output (a < b);
+output (a > 12);
+output (a <= true);
+output (a > false);
+output (a # b);
+output (a == 12);
+end expr;

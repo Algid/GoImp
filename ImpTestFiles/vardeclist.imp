@@ -1,0 +1,20 @@
+var x : integer;
+    b, c, d : boolean;
+
+procedure myproc() is
+var a, r, t : boolean;    
+begin
+
+end myproc;
+
+function myfun( ) return boolean is
+begin
+  return false;
+end myfun;
+
+function ourfun( ) return integer is
+var a : integer;
+    b, c : boolean;
+begin
+  return mymoney;
+end ourfun;

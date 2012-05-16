@@ -1,0 +1,6 @@
+// prog1.imp
+procedure main() is
+begin
+ output("Hello World!");
+ newline;
+end main;

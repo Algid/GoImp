@@ -1,0 +1,15 @@
+// simple statements
+procedure simplestmts() is 
+begin
+null;
+break;
+return;
+return 12;
+halt;
+newline;
+x = 12;
+call me(cell, 123);
+call me();
+call me(ishmael);
+input(x);
+end simplestmts;
