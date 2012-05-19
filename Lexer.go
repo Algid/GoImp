@@ -2,10 +2,13 @@ package lexer
 
 import(
     "io"
+    "bufio"
+    "bytes"
+    "strings"
 )
 
 type Lexer struct{
-    source *io.Reader
+    source *bufio.Reader
     listing *io.Writer
 
     lexeme string
@@ -20,8 +23,12 @@ const(
     T_plus; T_minus; T_mult; T_div; T_mod; T_assign; T_error; T_id; T_number; T_string; T_eof;
 )
 
-func New() *Lexer{
-    return new(Lexer)
+func New(src *io.Reader, list *io.Writer) *Lexer{
+    lex := new(Lexer)
+    lex.source = bufio.NewReader(*src)
+    //lex.listing = bufio.NewWriter(*list)
+    lex.listing = list
+    return lex
 }
 
 func (lex *Lexer) GetLexeme() string{
@@ -33,23 +40,24 @@ func (lex *Lexer) GetChar() (char rune, err error) {
         part []byte
         prefix bool
     )
-    source := bufio.NewReader(source)
+    //lex.source = bufio.NewReader(source)
     buffer := bytes.NewBuffer(make([]byte,0))
     if lex.currentLine == ""{
-        if part, prefix, err = source.ReadLine(); err != nil {
-            break
+        if part, prefix, err = lex.source.ReadLine(); err != nil {
+            return
         }
         buffer.Write(part)
         if !prefix {
             lex.currentLine = buffer.String()
-            if _, err = io.WriteString(listing, lex.currentLine); err != nil {
-                break
+            if _, err = io.WriteString(*lex.listing, lex.currentLine); err != nil {
+                return
             }
             buffer.Reset()
         }
     }
     runeReader := strings.NewReader(lex.currentLine)
-    if rune, _, err = runeReader.ReadRune(); err != nil {
-        break
-    }    
+    if char, _, err = runeReader.ReadRune(); err != nil {
+        return
+    }
+    return
 }

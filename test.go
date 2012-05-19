@@ -2,13 +2,26 @@ package main
 
 import(
     "fmt"
+    "os"
+    "io"
+    "strings"
     "GoImp"
 )
 
 func main(){
-    lex := lexer.New()
-    for i := 0; i < 10; {
-        fmt.Println(lex.GetChar())
-        i++
+    var (
+        str *strings.Reader
+        src *io.Reader
+        file *os.File
+        err error
+        list *io.Writer
+    )
+    str = strings.NewReader("Foo Bar")
+    src = io.Reader(str)
+    if file, err = os.Open("list.imp"); err != nil{
+        fmt.Println("Error opening file")
     }
+    list = io.Writer(file)
+    lex := lexer.New(src, list)
+    fmt.Println(lex.GetChar())
 }
