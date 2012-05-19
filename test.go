@@ -11,17 +11,19 @@ import(
 func main(){
     var (
         str *strings.Reader
-        src *io.Reader
+        src io.Reader
         file *os.File
         err error
-        list *io.Writer
+        list io.Writer
     )
     str = strings.NewReader("Foo Bar")
     src = io.Reader(str)
-    if file, err = os.Open("list.imp"); err != nil{
-        fmt.Println("Error opening file")
+    if file, err = os.Create("./list.imp"); err != nil{
+        fmt.Println(err)
     }
+    defer file.Close()
     list = io.Writer(file)
-    lex := lexer.New(src, list)
+    lex := lexer.New(&src, &list)
+    fmt.Println(lex.GetChar())
     fmt.Println(lex.GetChar())
 }
