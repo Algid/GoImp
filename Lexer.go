@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
     "fmt"
+    "unicode"
 	"io"
 	"strings"
 )
@@ -12,15 +13,17 @@ type Lexer struct {
 	source  *bufio.Reader
 	listing *io.Writer
     
-    tokenToStringVector []string
-    lexemeTokenMap map[string] int
+    TokenToStringVector []string
+    LexemeTokenMap map[string] int
     
-	lexeme      string
+	Lexeme      string
+    ch rune
 	currentLine *strings.Reader
 }
 
 const (
-	T_and = iota
+    _ = iota
+	T_and
 	T_begin
 	T_boolean
 	T_break
@@ -75,23 +78,20 @@ func New(src *io.Reader, list *io.Writer) *Lexer {
 	lex := new(Lexer)
 	lex.source = bufio.NewReader(*src)
 	lex.listing = list
-    lex.lexeme = ""
-    lex.tokenToStringVector = make([]string, 50)
-    lex.lexemeTokenMap = map[string]int {}
+    lex.ch,_ = lex.GetChar()
+    lex.Lexeme = ""
+    lex.TokenToStringVector = make([]string, 50)
+    lex.LexemeTokenMap = map[string]int {}
     tokenNames := []string{"and","begin","boolean","break","call","end","else","elseif","false","function","halt","if","input","integer","is","loop","not","null","newline","or","output","procedure","return","then","true","var","while","@comma","@colon","@lparen","@rparen","@semi","@lt","@le","@gt","@ge","@eq","@ne","@plus","@minus","@mult","@div","@mod","@assign","@t_error","@t_id","@t_number","@t_string","@t_eof"}
     for t:= T_and; t <= T_eof; t++{
-        lex.tokenToStringVector[t] = tokenNames[t]
-        lex.lexemeTokenMap[tokenNames[t]] = t
+        lex.TokenToStringVector[t] = tokenNames[t]
+        lex.LexemeTokenMap[tokenNames[t]] = t
     }
     
     return lex
 }
 
-func (lex *Lexer) GetLexeme() string {
-	return lex.lexeme
-}
-
-func (lex *Lexer) GetChar() (char string, err error) {
+func (lex *Lexer) GetChar() (char rune, err error) {
 	var (
 		part        []byte
 		prefix      bool
@@ -116,6 +116,41 @@ func (lex *Lexer) GetChar() (char string, err error) {
         fmt.Println(err)
 		return
 	}
-	char = string(currentRune)
+	char = currentRune
 	return
+}
+
+
+
+
+func (lex *Lexer) GetToken() (token int, err error){
+
+	
+	//Keep going until you find a nonwhitespace character
+	for unicode.IsSpace(lex.ch) {
+		lex.ch,err = lex.GetChar();
+	}
+    if unicode.IsDigit(lex.ch) {
+        for unicode.IsDigit(lex.ch) {
+            lex.Lexeme += string(lex.ch)
+            lex.ch,err = lex.GetChar()
+        }
+        token = T_number
+        return
+    }
+    if(unicode.IsLetter(lex.ch) || (string(lex.ch)) == "_") {
+        for unicode.IsLetter(lex.ch) || (string(lex.ch)) == "_" {
+            lex.Lexeme += string(lex.ch)
+            lex.ch,err = lex.GetChar()
+        }
+        if(lex.LexemeTokenMap[lex.Lexeme] == 0) {
+            token = T_id
+            return
+        } else {
+            token = lex.LexemeTokenMap[lex.Lexeme]
+            return
+        }
+    }
+
+    return
 }
