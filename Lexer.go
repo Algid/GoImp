@@ -3,7 +3,6 @@ package lexer
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"io"
 	"strings"
 )
@@ -11,7 +10,10 @@ import (
 type Lexer struct {
 	source  *bufio.Reader
 	listing *io.Writer
-
+    
+    tokenToStringVector []string
+    lexemeTokenMap map[string] int
+    
 	lexeme      string
 	currentLine *strings.Reader
 }
@@ -71,9 +73,16 @@ const (
 func New(src *io.Reader, list *io.Writer) *Lexer {
 	lex := new(Lexer)
 	lex.source = bufio.NewReader(*src)
-	//lex.listing = bufio.NewWriter(*list)
 	lex.listing = list
-	return lex
+    lex.lexeme = ""
+    lex.tokenToStringVector = make([]string, 50)
+    tokenNames := []string{"and","begin","boolean","break","call","end","else","elseif","false","function","halt","if","input","integer","is","loop","not","null","newline","or","output","procedure","return","then","true","var","while","@comma","@colon","@lparen","@rparen","@semi","@lt","@le","@gt","@ge","@eq","@ne","@plus","@minus","@mult","@div","@mod","@assign","@t_error","@t_id","@t_number","@t_string","@t_eof"}
+    for t:= T_and; t <= T_eof; t++{
+        lex.tokenToStringVector[t] = tokenNames[t]
+        lex.lexemeTokenMap[tokenNames[t]] = t
+    }
+    
+    return lex
 }
 
 func (lex *Lexer) GetLexeme() string {
@@ -89,7 +98,6 @@ func (lex *Lexer) GetChar() (char string, err error) {
 	//lex.source = bufio.NewReader(source)
 	buffer := bytes.NewBuffer(make([]byte, 0))
 	if lex.currentLine == nil || lex.currentLine.Len() == 0 {
-		fmt.Println("reading new line")
 		if part, prefix, err = lex.source.ReadLine(); err != nil {
 			return
 		}

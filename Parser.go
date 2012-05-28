@@ -2,6 +2,7 @@ package Parser
 
 import "fmt"
 import "os"
+import "GoImp"
 
 func parse()
 {
