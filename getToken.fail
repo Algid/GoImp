@@ -1,0 +1,6 @@
+improper capitalization
+ch is not static
+ch and lexeme don't have a type
+ch needs to be a rune not a string
+can't use IsSpace/IsDigit without importing unicode
+incorrect use of if...else syntax
