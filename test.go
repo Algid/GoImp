@@ -17,7 +17,7 @@ func main(){
         err error
         list io.Writer
     )
-    str = strings.NewReader("Foo Bar 123")
+    str = strings.NewReader("Foo Bar 123\nwolololol")
     src = io.Reader(str)
     if file, err = os.Create("./list.imp"); err != nil{
         fmt.Println(err)
@@ -26,7 +26,8 @@ func main(){
     list = io.Writer(file)
     lex := lexer.New(&src, &list)
     char,_ = lex.GetChar()
-    fmt.Println(char)
-    fmt.Println(lexer.T_and)
-    fmt.Println(lexer.T_eof)
+    for char != "" {
+        fmt.Println(char)
+        char,_ = lex.GetChar()
+    }
 }
