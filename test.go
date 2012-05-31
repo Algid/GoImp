@@ -4,30 +4,35 @@ import(
     "fmt"
     "os"
     "io"
-    "strings"
-    "GoImp"
+    "bufio"
+    "GoImp/parser"
 )
 
 func main(){
     var (
-        str *strings.Reader
         src io.Reader
-        file *os.File
+        infile *os.File
+        outfile *os.File
         err error
         list io.Writer
-        token int
     )
-    str = strings.NewReader("x _ _x and begin boolean break call end else false\nbegin function half if input integer is loop not null\n newline or output procedure return then true var\n123,:()< <= > >= > = == # + - * / %!<\n \"This is a string token\" mom is nice\n so is dad //but little sis is naughty x\n y\nx \n bye ")
-    src = io.Reader(str)
-    if file, err = os.Create("./list.imp"); err != nil{
+    fmt.Println("What is the input file?")
+    input := bufio.NewReader(os.Stdin)
+    str, err := input.ReadString('\n')
+
+    if infile, err = os.Open("./ImpTestFiles/" + str[0:len(str)-1] + ".imp"); err != nil{
         fmt.Println(err)
+        os.Exit(1)
     }
-    defer file.Close()
-    list = io.Writer(file)
-    lex := lexer.New(&src, &list)
-    token,_ = lex.GetToken()
-    for token != lexer.T_eof {
-        fmt.Println(lex.TokenToStringVector[token] + ":" + lex.Lexeme)
-        token,_ = lex.GetToken()
+    defer infile.Close()
+    src = io.Reader(infile)
+
+    if outfile, err = os.Create("./ImpTestFiles/" + str[0:len(str)-1] + ".out"); err != nil{
+        fmt.Println(err)
+        os.Exit(1)
     }
+    defer outfile.Close()
+    list = io.Writer(outfile)
+    parse := parser.New(&src, &list)
+    parse.Parse()
 }
