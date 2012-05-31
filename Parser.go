@@ -1,163 +1,180 @@
 package Parser
 
-import "fmt"
-import "os"
-import "GoImp"
+import (
+    "fmt"
+    "os"
+    "GoImp"
+)
 
-func parse()
-{
-    token = getToken()
-    program()
+type Parser struct{
+    Lex lexer
+    Listing *io.Writer
+    Token int
 }
 
-func accept(TokenType t)
+func New(src *io.Reader, list *io.Writer) *Parser
 {
-    if token == t {
-        token = getToken()
+    Parse := new(Parser)
+    Parse.Lex := lexer.New(src,list)
+    
+}
+
+func (parse *Parser) Parse()
+{
+    parse.Token = parse.Lex.GetToken()
+    Program()
+}
+
+func (parse *Parser) Accept(t int)
+{
+    if parse.Token == t {
+        parse.Token = parse.Lex.GetToken()
     }
     else {
-        errorMessage(t, token)
+        parse.ErrorMessage(t, parse.Token)
     }
 }
 
-func errorMessage(expected, found TokenType)
+func (parse *Parser) ErrorMessage(expected int, found int)
 {
-    fmt.Println("\n\n I was expecting a " + lex.tokenToString(expected) + " but I found a " + lex.tokenToString(found) + " " + lex.getLexeme())
-    os.exit(1)
+    buffer := bytes.NewBuffer(make([]byte,0))
+    buffer.Write("\n\n I was expecting a " + parse.Lex.TokenToString(expected) + " but I found a " + parse.Lex.TokenToString(found) + " " + parse.Lex.Lexeme)
+    io.WriteString(*parse.Listing, buffer.String())
+    os.Exit(1)
 }
 
-func errorMessage(message string)
+func (parse *Parse) StringErrorMessage(message string)
 {
-    fmt.Println("\n" + message)
-    os.exit(1)
+    buffer := bytes.NewBuffer(make([]byte,0))
+    buffer.Write(("\n" + message))
+    io.WriteString(*parse.Listing, buffer.String())
+    os.Exit(1)
 }
 
 //PROGRAM ::= VARDECS SUBROUTINES
-func program()
+func (parse *Parser) Program()
 {
-    vardecs()
-    subroutines()
+    parse.Vardecs()
+    parse.Subroutines()
 }
 
 //VARDECS ::= var VARDECLIST { VARDECLIST } | empty
-func vardecs()
+func (parse *Parser) Vardecs()
 {
     //TRACER t("vardecs " + lex.getLexeme())
-    if token != t_var {return}
-    accept(t_var)
-    vardeclist()
-    for ; token == t_id; {
-        vardeclist()
+    if parse.Token != lexer.T_var {return}
+    parse.Accept(lexer.T_var)
+    parse.Vardeclist()
+    for parse.Token == lexer.T_id {
+        parse.Vardeclist()
     }
 }
 
 //VARDECLIST ::= id {, id } : TYPE
-func vardeclist()
+func (parse *Parser) Vardeclist()
 {
     //TRACER t("vardeclist " + lex.getLexeme())
-    accept(t_id)
-
-    if token == t_colon {
-        accept(t_colon)
-        type()
-        accept(t_semi)
-        if token == t_id {
-            vardeclist()
-        }
+    parse.Accept(t_id)
+    for parse.Token == lexer.T_comma {
+        parse.Accept(lexer.T_comma)
+        parse.Accept(lexer.T_id)
     }
-
-    if token == t_comma {
-        accept(t_comma)
-    }
+    parse.Accept(lexer.T_colon)
+    parse.Type()
+    parse.Accept(lexer.T_semi)
 }
 
 //TYPE ::= integer | boolean
-func type()
+func (parse *Parser) Type()
 {
     //TRACER t("type " + lex.getLexeme())
-    if token == t_integer {
-        accept(t_integer)
+    if parse.Token == lexer.T_integer {
+        parse.Accept(lexer.T_integer)
     }
 
-    else if token == t_boolean {
-        accept(t_boolean)
+    else if parse.Token == lexer.T_boolean {
+        parse.Accept(lexer.T_boolean)
     }
 
-    else {errorMessage(t_boolean,token)}
+    else {ErrorMessage(lexer.T_boolean,parse.Token)}
 }
 
 //SUBROUTINES ::= PROCFUN { PROCFUN }
-func subroutines()
+func (parse *Parser) Subroutines()
 {
     //TRACER t("subroutines " + lex.getLexeme())
-    for ; token == t_procedure || token == t_function; {
-        procfun()
+    parse.Procfun()
+    for parser.Token == lexer.T_procedure || parse.Token == lexer.T_function {
+        parse.Procfun()
     }
 }
 
 //PROCFUN ::= PROC | FUN
-func procfun()
+func (parse *Parser) Procfun()
 {
     //TRACER t("procfun " + lex.getLexeme())
-    if token == t_procedure {
-        proc()
+    if parse.Token == lexer.T_procedure {
+        parse.Proc()
     }
 
-    if token == t_function {
-        fun()
+    if parse.Token == lexer.T_function {
+        parse.Fun()
     }
 }
 
 //PROC ::= procedure id ( PARAMETERS ) is PROCBODY
-func proc()
+func (parse *Parser) Proc()
 {
     //TRACER t("proc " + lex.getLexeme())
-    accept(t_procedure)
-    accept(t_id)
-    accept(t_lparen)
-    parameters()
-    accept(t_rparen)
-    accept(t_is)
-    procbody()
+    parse.Accept(lexer.T_procedure)
+    parse.Accept(lexer.T_id)
+    parse.Accept(lexer.T_lparen)
+    parse.Parameters()
+    parse.Accept(lexer.T_rparen)
+    parse.Accept(lexer.T_is)
+    parse.Procbody()
 }
 
 //FUN ::= function id ( PARAMETERS ) return TYPE is PROCBODY
-func fun()
+func (parse *Parser) Fun()
 {
     //TRACER t("fun " + lex.getLexeme())
-    accept(t_function)
-    accept(t_id)
-    accept(t_lparen)
-    parameters()
-    accept(t_rparen)
-    accept(t_return)
-    type()
-    accept(t_is)
-    procbody()
+    parse.Accept(lexer.T_function)
+    parse.Accept(lexer.T_id)
+    parse.Accept(lexer.T_lparen)
+    parse.Parameters()
+    parse.Accept(lexer.T_rparen)
+    parse.Accept(lexer.T_return)
+    parse.Type()
+    parse.Accept(lexer.T_is)
+    parse.Procbody()
 }
 
 //PARAMETERS ::= PARAMLIST { PARAMLIST} | E
-func parameters()
+func (parse *Parser) Parameters()
 {
     //TRACER t("parameters " + lex.getLexeme())
-    if token == t_rparen {return}
-    paramlist()
+    if parse.Token != lexer.T_id {
+        return
+    }
+    parse.Paramlist()
+    for parse.Token == lexer.T_semi {
+        parse.Accept(lexer.T_semi)
+        parse.Paramlist()
+    }
 }
 
 //PARAMLIST ::= id {, id} : TYPE
-func paramlist()
+func (parse *Parser) Paramlist()
 {
     //TRACER t("paramlist " + lex.getLexeme())
-    if token != t_id {
-        errorMessage(t_id,token)
+    parse.Accept(lexer.T_id)
+    for parse.Token == lexer.T_comma {
+        parse.Accept(lexer.T_comma)
+        parse.Accept(lexer.T_id)
     }
-
-    for ; token == t_id; {
-        accept(t_id)
-        if token == t_comma {
-            accept(t_comma)
-        }
-    }
+    parse.Accept(lexer.T_colon)
+    parse.Type()
 }
 
 //PROCBODY ::= VARDECS begin STMTLIST end id
