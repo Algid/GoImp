@@ -51,6 +51,22 @@ func (parse *Parse) StringErrorMessage(message string)
     os.Exit(1)
 }
 
+func (parse *Parse) BeginsFactor(t int) ret bool
+{
+    switch(t){
+    case lexer.T_minus:
+    case lexer.T_not:
+    case lexer.T_number:
+    case lexer.T_false:
+    case lexer.T_true:
+    case lexer.T_id:
+    case lexer.T_lparen:
+        return true
+    default:
+        return false
+    }
+}
+
 //PROGRAM ::= VARDECS SUBROUTINES
 func (parse *Parser) Program()
 {
@@ -178,229 +194,257 @@ func (parse *Parser) Paramlist()
 }
 
 //PROCBODY ::= VARDECS begin STMTLIST end id
-func procbody()
+func (parse *Parser) Procbody()
 {
     //TRACER t("procbody " + lex.getLexeme())
-    vardecs()
-    accept(t_begin)
-    stmtlist()
-    accept(t_end)
-    accept(t_id)
-    accept(t_semi)
+    parse.Vardecs()
+    parse.Accept(lexer.T_begin)
+    parse.Stmtlist()
+    parse.Accept(lexer.T_end)
+    parse.Accept(lexer.T_id)
+    parse.Accept(lexer.T_semi)
 }
 
 //STMTLIST ::= E | STMT STMTLIST
-func stmtlist()
+func (parse *Parser) Stmtlist()
 {
     //TRACER t("stmtlist " + lex.getLexeme())
-    if token == t_end || token == t_else {return}
-    stmt()
-    accept(t_semi)
-    stmtlist()
+    switch (parse.Token) {
+    case lexer.T_if:
+    case lexer.T_while:
+    case lexer.T_id:
+    case lexer.T_call:
+    case lexer.T_input:
+    case lexer.T_output:
+    case lexer.T_null:
+    case lexer.T_break:
+    case lexer.T_return:
+    case lexer.T_halt:
+    case lexer.T_newline:
+        parse.Stmt()
+        parse.Accept(lexer.T_semi)
+        parse.Stmtlist()
+        return
+    default:
+        return
+    }
 }
 
 //STMT ::= IFSTMT | WHILESTMT | ASSIGNSTMT
 //STMT ::= CALLSTMT | INPUTSTMT | OUTPUTSTMT
 //STMT ::= null |  | return
 //STMT ::= return EXPR | halt | newline
-func stmt()
+func (parse *Parser) Stmt()
 {
     //TRACER t("stmt " + lex.getLexeme())
-    switch (token) 
-    {
-    case t_if: ifstmt()
-        
-    case t_while: whilestmt()
-        
-    case t_id: assignstmt()
-        
-    case t_call: callstmt()
-        
-    case t_input: inputstmt()
-        
-    case t_output: outputstmt()
-        
-    case t_null: accept(t_null)
-        
-    case t_break: accept(t_break)
-        
-    case t_return: accept(t_return)
-        if token != t_semi {
-            expr()
+    switch (parse.Token) {
+    case lexer.T_if:
+        parse.Ifstmt()
+        break
+    case lexer.T_while:
+        parse.Whilestmt()
+        break
+    case lexer.T_id:
+        parse.Assignstmt()
+        break
+    case lexer.T_call:
+        parse.Callstmt()
+        break
+    case lexer.T_input:
+        parse.Inputstmt()
+        break
+    case lexer.T_output:
+        parse.Outputstmt()
+        break
+    case lexer.T_null:
+        parse.Accept(lexer.T_null)
+        break
+    case lexer.T_break:
+        parse.Accept(lexer.T_break)
+        break
+    case lexer.T_return:
+        parse.Accept(lexer.T_return)
+        if parse.BeginsFactor(parse.Token) {
+            parse.Expr()
         }
-        
-    case t_halt: accept(t_halt)
-        
-    case t_newline: accept(t_newline)
+        break
+    case lexer.T_halt:
+        parse.Accept(lexer.T_halt)
+        break
+    case lexer.T_newline:
+        parse.Accept(lexer.T_newline)
+        break
+    default:
+        parse.StringErrorMessage("Invalid Statement")
+        break
     }
+    return
 }
 
 //IFSTMT ::= if EXPR then STMTLIST [else STMTLIST] end if
-func ifstmt()
+func (parse *Parser) Ifstmt()
 {
     //TRACER t("ifstmt " + lex.getLexeme())
-    accept(t_if)
-    expr()
-    accept(t_then)
+    parse.Accept(lexer.T_if)
+    parse.Expr()
+    parse.Accept(T_then)
     stmtlist()
-    if token == t_else {
-        accept(t_else)
-        stmtlist()
+    if parse.Token == lexer.T_else {
+        parse.Accept(lexer.T_else)
+        parse.Stmtlist()
     }
 
-    accept(t_end)
-    accept(t_if)
+    parse.Accept(lexer.T_end)
+    parse.Accept(lexer.T_if)
 }
 
 //WHILESTMT ::= while EXPR loop STMTLIST end loop
-func whilestmt()
+func (parse *Parser) Whilestmt()
 {
     //TRACER whilestmt("type " + lex.getLexeme())
-    accept(t_while)
-    expr()
-    accept(t_loop)
-    stmtlist()
-    accept(t_end)
-    accept(t_loop)
+    parse.Accept(lexer.T_while)
+    parse.Expr()
+    parse.Accept(lexer.T_loop)
+    parse.Stmtlist()
+    parse.Accept(lexer.T_end)
+    parse.Accept(lexer.T_loop)
 }
 
 //ASSIGNSTMT ::= id = EXPR
-func assignstmt()
+func (parse *Parser) Assignstmt()
 {
     //TRACER t("assignstmt " + lex.getLexeme())
-    accept(t_id)
-    accept(t_assign)
-    expr()
+    parser.Accept(lexer.T_id)
+    parser.Accept(lexer.T_assign)
+    parser.Expr()
 }
 
 //CALLSTMT ::= call id( ARGLIST )
-func callstmt()
+func (parse *Parser) Callstmt()
 {
     //TRACER t("callstmt " + lex.getLexeme())
-    accept(t_call)
-    accept(t_id)
-    accept(t_lparen)
-    arglist()
-    accept(t_rparen)
+    parse.Accept(lexer.T_call)
+    parse.Accept(lexer.T_id)
+    parse.Accept(lexer.T_lparen)
+    parse.Arglist()
+    parse.Accept(lexer.T_rparen)
 }
 
 //INPUTSTMT ::= input(id)
-func inputstmt()
+func (parse *Parser) Inputstmt()
 {
     //TRACER t("inputstmt " + lex.getLexeme())
-    accept(t_input)
-    accept(t_lparen)
-    accept(t_id)
-    accept(t_rparen)
+    parse.Accept(lexer.T_input)
+    parse.Accept(lexer.T_lparen)
+    parse.Accept(lexer.T_id)
+    parse.Accept(lexer.T_rparen)
 }
 
 //OUTPUTSTMT ::= output(EXPR) | output(string)
 func outputstmt()
 {
     //TRACER t("outputstmt " + lex.getLexeme())
-    accept(t_output)
-    accept(t_lparen)
-    if token == t_string {
-        accept(t_string)
-        accept(t_rparen)
+    parse.Accept(lexer.T_output)
+    parse.Accept(lexer.T_lparen)
+    if parse.Token == lexer.T_string {
+        parse.Accept(lexer.T_string)
     }
-
     else {
-        expr()
-        accept(t_rparen)
+        parse.Expr()
     }
+    parse.Accept(lexer.T_rparen)
 }
 
 //EXPR ::= SIMPLEEXPR [ RELOP SIMPLEEXPR ]
-func expr()
+func (parse *Parser) Expr()
 {
     //TRACER t("expr " + lex.getLexeme())
-    simpleexpr()
-    for ;isRelop(token); {
-        token = getToken()
-        simpleexpr()
+    parse.Simpleexpr()
+    if parse.IsRelop(parse.Token) {
+        parse.Token = parse.Lex.GetToken()
+        parse.Simpleexpr()
     }
 }
 
 //SIMPLEEXPR ::= TERM { ADDOP TERM }
-func simpleexpr()
+func (parse *Parser) Simpleexpr()
 {
     //TRACER t("simpleexpr " + lex.getLexeme())
-    term()
-    for ;isAddop(token); {
-        token = getToken()
-        term()
+    parse.Term()
+    for parse.IsAddop(parse.Token) {
+        parse.Token = parse.Lex.GetToken()
+        parse.Term()
     }
 }
 
 //TERM ::= FACTOR {MULTOP FACTOR }
-func term()
+func (parse *Parser) Term()
 {
     //TRACER t("term " + lex.getLexeme())
-    factor()
-    for ;isMultop(token); {
-        token = getToken()
-        factor()
+    parse.Factor()
+    for parse.IsMultop(parse.Token) {
+        parse.Token = parse.Lex.GetToken()
+        parse.Factor()
     }
 }
 
 //FACTOR ::= -FACTOR | not FACTOR
 //FACTOR ::= number | false | true
 //FACTOR ::= id | id(ARGLIST) | (EXPR)
-func factor()
+func (parse *Parser) Factor()
 {
     //TRACER t("factor " + lex.getLexeme())
-    switch (token)
-    {
-    case t_minus: accept(t_minus)
-        factor()
-        
-    case t_not: accept(t_not)
-        factor()
-        
-    case t_number: accept(t_number)
-        
-    case t_false: accept(t_false)
-        
-    case t_true: accept(t_true)
-        
-    case t_id: accept(t_id)
-        if (token == t_lparen) {
-            accept(t_lparen)
-            arglist()
-            accept(t_rparen)
+    if parse.BeginsFactor(parse.Token) {
+        if parse.Token == lexer.T_id {
+            parse.Accept(lexer.T_id)
+            if(parse.Token == lexer.T_lparen {
+                parse.Accept(lexer.T_lparen)
+                parse.Arglist()
+                parse.Accept(lexer.T_rparen)
+            }
         }
-        
-    case t_lparen: accept(t_lparen)
-        expr()
-        accept(t_rparen)
+        else if paren.Token == lexer.T_minus || paren.Token == lexer.T_not {
+            parse.Accept(parse.Token)
+            parse.Factor()
+        }
+        else if paren.Token == lexer.T_lparen {
+            parse.Accept(lexer.T_lparen)
+            parse.Expr()
+            parse.Accept(lexer.T_rparen)
+        }
+        else {
+            parse.Accept(parse.Token)
+        }
+    }
+    else {
+        parse.StringErrorMessage("Invalid factor token: " + parse.Token)
     }
 }
 
 //ARGLIST ::= EXPR {, EXPR } | E
-func arglist()
+func (parse *Parser) Arglist()
 {
     //TRACER t("arglist " + lex.getLexeme())
-    if token == t_rparen {return}
-    expr()
-    for ; token == t_comma; {
-        accept(t_comma)
-        expr()
+    if parse.BeginFactor(parse.Token) {
+        parse.Expr()
+        for parse.Token == lexer.T_comma {
+            parse.Accept(lexer.T_comma)
+            parse.Expr()
+        }
     }
 }
 
-bool isRelop(TokenType t)
+func (parse *Parser) IsRelop(t int) bool
 {
-    return t == t_eq || t == t_ne || t == t_le || t== t_lt ||
-    t == t_ge || t == t_gt
+    return t == lexer.T_eq || t == lexer.T_ne || t == lexer.T_le || t== lexer.T_lt || t == lexer.T_ge || t == lexer.T_gt
 }
 
-bool isAddop(TokenType t)
+func (parse *Parser) IsAddop(t int) bool
 {
-    return t == t_plus || t == t_minus || t == t_or
+    return t == lexer.T_plus || t == lexer.T_minus || t == lexer.T_or
 }
 
-bool isMultop(TokenType t)
+func (parse *Parser) IsMultop(t int) bool
 {
-    return t == t_mult || t == t_div || t == t_mod || t== t_and
+    return t == lexer.T_mult || t == lexer.T_div || t == lexer.T_mod || t== lexer.T_and
 }
